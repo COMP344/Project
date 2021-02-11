@@ -1,5 +1,5 @@
 
-public abstract class Token {
+public interface Token {
 
 	public abstract getToken();
 

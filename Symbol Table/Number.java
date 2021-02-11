@@ -1,8 +1,10 @@
 
 public class Number extends Token{
 	
+	private Number(){}
+
 	//https://www.baeldung.com/java-check-string-number
-	public static boolean isNumber(String token) {
+	private boolean isNumber(String token) {
 		
 	    try {
 	        double d = Double.parseDouble(strNum);
@@ -12,13 +14,13 @@ public class Number extends Token{
 	    return true;
 	}
 	
-	public int getToken(String symbol){		
-		if(isNumber(symbol)) {
+	public static int getToken(String symbol){		
+		if(this.isNumber(symbol)) {
 			return symbol;
 		}
 		else {
-		//Future error code
-			return null;
+		//Future error code, magic number for now
+			return -2;
 		}
 	}
 }

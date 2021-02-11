@@ -2,7 +2,9 @@ import java.util.Map;
 
 public class Word extends Token{
 	
-	protected Map<String,Integer> wordMap = Map.ofEntries(			
+	private Word(){}
+
+	protected static Map<String,Integer> wordMap = Map.ofEntries(			
 			entry("BEGIN",51),
 			entry("BOOL",44),
 			entry("CONST",50),
@@ -27,12 +29,10 @@ public class Word extends Token{
 			entry("WHILE",26)
 			)
 
-	public String getToken(String symbol){
-		if(wordMap.containsKey(symbol)){
-			return String.valueOf(wordMap(symbol));
-		}
-		else{
-			return symbol;
-		}		
+	public static int getToken(String symbol){
+			if(wordMap.get(symbol) != null){
+				return wordMap.get(symbol);
+			}
+				return (int)symbol;
 	}
 }

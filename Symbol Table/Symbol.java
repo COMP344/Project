@@ -1,7 +1,7 @@
-import java.util.Map
+import java.util.Map;
 public class Symbol extends Token{
 	
-	protected Map<String,Integer> symbolMap = Map.ofEntries(			
+	protected static Map<String,Integer> symbolMap = Map.ofEntries(			
 			entry("!",20),
 			entry("#",11),
 			entry("$",32),
@@ -26,9 +26,10 @@ public class Symbol extends Token{
 			entry("~",5)
 			)
 	
+	private Symbol(){}
 	
 	
-	public String getToken(String symbol){
-		return String.valueOf(symbolMap(symbol));
+	public int static getToken(String symbol){
+		return symbolMap.get(symbol);
 	}
 }

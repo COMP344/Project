@@ -1,0 +1,16 @@
+
+public abstract class Error {
+
+    Error nextError;
+
+    public void setNextError(Error error){
+        nextError = error;
+    }
+
+    public void getNextError(){
+        return nextError;
+    }
+
+    public abstract errorMessage();
+
+}
