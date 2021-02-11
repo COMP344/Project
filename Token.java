@@ -1,6 +1,6 @@
 
 public abstract class Token {
 
-	public abstract getTokenType();
+	public abstract getToken();
 
 }
