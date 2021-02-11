@@ -1,5 +1,4 @@
 import java.util.Map
-
 public class Symbol extends Token{
 	
 	protected Map<String,Integer> symbolMap = Map.ofEntries(			
@@ -15,7 +14,7 @@ public class Symbol extends Token{
 			entry("-",4),
 			entry(".",16),
 			entry("/",2),
-			entry(":",17),
+			entry(":",18),
 			entry("=",10),
 			entry(";",36),
 			entry("<=",14),
