@@ -14,6 +14,8 @@ public class Scanner implements IScanner {
     private int column = 1;
     Position position;
 
+    TokenFactory tokenFactory;
+
     private static final Map<String, Token.TokenType> KEYWORDS = new HashMap<>();
     private static final Map<String, Token.TokenType> SYMBOLS = new HashMap<>();
 
@@ -67,6 +69,7 @@ public class Scanner implements IScanner {
 
     Scanner(String source) {
         this.source = source;
+        tokenFactory = new TokenFactory();
     }
 
     @Override
@@ -76,7 +79,7 @@ public class Scanner implements IScanner {
             position = new Position(line, column);
             scanToken();
         }
-        tokens.add(new Token(Token.TokenType.EOF, "", null, position));
+        tokens.add(tokenFactory.makeEofToken(position.getLineNumber(), position.getColumnNumber()));
         return tokens;
     }
 
@@ -185,7 +188,7 @@ public class Scanner implements IScanner {
 
     private void addToken(Token.TokenType type, Object literal) {
         String text = source.substring(start, current);
-        tokens.add(new Token(type, text, literal, position));
+        tokens.add(tokenFactory.makeToken(type, text, literal, position.getLineNumber(), position.getColumnNumber()));
     }
 
     private boolean match(char expected) {

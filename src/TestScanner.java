@@ -21,7 +21,8 @@ public class TestScanner {
         byte[] bytes = Files.readAllBytes(Paths.get(path));
         String source = new String(bytes);
 
-        Scanner scanner = new Scanner(source);
+        ScannerFactory scannerFactory = new ScannerFactory();
+        IScanner scanner = scannerFactory.getScanner(source);
         List<IToken> tokens = scanner.scanTokens();
 
         for (IToken token : tokens) {
