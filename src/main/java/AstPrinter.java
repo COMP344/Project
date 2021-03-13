@@ -4,19 +4,30 @@ public class AstPrinter implements Expr.Visitor<String>, Decl.Visitor<String>, S
 
     StringBuilder sb;
 
+    int currentTabs;
+
     AstPrinter() {
         this.sb = new StringBuilder();
+        this.currentTabs = 0;
     }
 
-    String print(Expr expr) {
+    String printExpr(Expr expr) {
         return expr.accept(this);
     }
 
-    String print(Decl decl) { return decl.accept(this); }
+    String printDecl(Decl decl) {
+        return decl.accept(this);
+    }
 
-    String print(Mod mod) {
+    String printMod(Mod mod) {
         return mod.accept(this);
     }
+
+    String printStmt(Stmt stmt) {
+        return stmt.accept(this);
+    }
+
+    //Expression visit functions
 
     @Override
     public String visitUnaryExpr(Expr.Unary expr) {
@@ -30,7 +41,7 @@ public class AstPrinter implements Expr.Visitor<String>, Decl.Visitor<String>, S
 
     @Override
     public String visitAssignExpr(Expr.Assign expr) {
-        return parenthesizeOther("=", expr.name.lexeme, expr.value);
+        return parenthesizeAssignExpr(expr.name.lexeme, expr.value);
     }
 
     @Override
@@ -39,24 +50,110 @@ public class AstPrinter implements Expr.Visitor<String>, Decl.Visitor<String>, S
     }
 
     @Override
-    public String visitGroupingExpr(Expr.Grouping expr) {
-        return null;
-    }
-
-    @Override
     public String visitLiteral(Expr.Literal expr) {
         return expr.value.toString();
     }
 
+    //Declaration visit functions
 
+    @Override
+    public String visitModuleDecl(Decl.Module decl) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("MODULE ");
+        String modName = decl.modHeader.ident.lexeme;
+        sb.append(decl.modHeader.accept(this));
+        sb.append(decl.modBody.accept(this));
+        sb.append("END ").append(modName).append(".");
+        return sb.toString();
+    }
 
-    private String parenthesize(String name, Expr ... exprs) {
+    @Override
+    public String visitConstDecl(Decl.Const decl) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("CONST ");
+        for (Stmt.Assign assignment : decl.assignList) {
+            sb.append(assignment.ident.lexeme).append(" = ").append(assignment.value.accept(this));
+        }
+        sb.append(";\n");
+        return sb.toString();
+    }
+
+    @Override
+    public String visitVarDecl(Decl.Var decl) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(decl.type.lexeme).append(" ");
+        int numOfAssignments = decl.varNames.size();
+        for (Token var : decl.varNames) {
+            numOfAssignments--;
+            sb.append(var.lexeme);
+            if (numOfAssignments >= 1) {
+                sb.append(", ");
+            }
+        }
+        sb.append(";\n");
+        return sb.toString();
+    }
+
+    @Override
+    public String visitProcDecl(Decl.Proc decl) {
+        return null;
+    }
+
+    //Statements visit functions
+
+    @Override
+    public String visitSeqStmt(Stmt.Seq stmt) {
+        StringBuilder sb = new StringBuilder();
+        for (Stmt stmt1 : stmt.stmtList) {
+            sb.append(insertTabs()).append(stmt1.accept(this)).append("\n");
+        }
+        return sb.toString();
+    }
+
+    @Override
+    public String visitAssignStmt(Stmt.Assign stmt) {
+        return stmt.ident.lexeme + " := " + stmt.value.accept(this);
+    }
+
+    @Override
+    public String visitExprStmt(Stmt.ExprStmt expr) {
+        return expr.expr.accept(this);
+    }
+
+    //Module visit functions
+
+    @Override
+    public String visitHeaderMod(Mod.Header mod) {
+        return mod.ident.lexeme + ";\n";
+    }
+
+    @Override
+    public String visitBodyMod(Mod.Body mod) {
+        currentTabs++;
+        StringBuilder sb = new StringBuilder();
+        if (mod.consts != null) {
+            sb.append(insertTabs()).append(mod.consts.accept(this));
+        }
+        if (mod.vars != null) {
+            sb.append(insertTabs()).append(mod.vars.accept(this));
+        }
+        if (mod.proc != null) {
+            sb.append(insertTabs()).append(mod.proc.accept(this));
+        }
+        if (mod.seqStmt != null) {
+            sb.append(mod.seqStmt.accept(this));
+        }
+        currentTabs--;
+        return sb.toString();
+    }
+
+    private String parenthesize(String name, Expr... exprs) {
         StringBuilder sb = new StringBuilder();
 
         sb.append("(");
         sb.append(name);
 
-        for(Expr expr : exprs) {
+        for (Expr expr : exprs) {
             sb.append(" ");
             sb.append(expr.accept(this));
         }
@@ -66,24 +163,20 @@ public class AstPrinter implements Expr.Visitor<String>, Decl.Visitor<String>, S
         return sb.toString();
     }
 
-    private String parenthesizeOther(String name, Object ... objs) {
+    private String parenthesizeAssignExpr(String name, Expr expr) {
         StringBuilder sb = new StringBuilder();
 
-        sb.append("(");
+        sb.append("(= ");
         sb.append(name);
-
-        for(Object obj : objs) {
-            sb.append(" ");
-            if (obj instanceof Expr) {
-                sb.append(((Expr) obj).accept(this));
-            } else if (obj instanceof Token) {
-                sb.append(((Token) obj).lexeme);
-            } else {
-                sb.append(obj);
-            }
-        }
+        sb.append(" ");
+        sb.append(expr.accept(this));
+        sb.append(")");
 
         return sb.toString();
+    }
+
+    private String insertTabs() {
+        return "\t".repeat(Math.max(0, currentTabs));
     }
 
     public static void main(String[] args) {
@@ -97,79 +190,41 @@ public class AstPrinter implements Expr.Visitor<String>, Decl.Visitor<String>, S
 //        System.out.println(new AstPrinter().print(expr));
 
         Decl decl = new Decl.Module(
-                        new Mod.Header(new Token(Token.TokenType.MODULE, "MODULE", null, null)),
-                        new Mod.Body(
-                                new Decl.Const(Arrays.asList(
-                                                        new Stmt.Assign(
-                                                            new Token(Token.TokenType.IDENT, "N", null, null),
-                                                            new Expr.Literal(10))
-                                                            )
-                                ),
-                                new Decl.Var(
-                                        new Token(Token.TokenType.INT, "INT", null, null),
-                                        Arrays.asList(
-                                                new Token(Token.TokenType.IDENT, "x", null, null)
-                                                )
-                                ),
-                                null,
-                                null
+                new Mod.Header(new Token(Token.TokenType.MODULE, "Assignments", null, null)),
+                new Mod.Body(
+                        new Decl.Const(
+                                  Arrays.asList(new Stmt.Assign(
+                                            new Token(Token.TokenType.IDENT, "N", null, null),
+                                            new Expr.Literal(10))
                         )
-                    );
-        System.out.println(new AstPrinter().print(decl));
+                        ),
+                        new Decl.Var(
+                                new Token(Token.TokenType.INT, "INT", null, null),
+                                Arrays.asList(
+                                        new Token(Token.TokenType.IDENT, "x", null, null)
+                                )
+                        ),
+                        null,
+                        null
+                )
+        );
+
+        Stmt stmts = new Stmt.Seq(
+                                    new Stmt.ExprStmt(
+                                            new Expr.Literal(10)
+                                    ),
+                                    new Stmt.ExprStmt(
+                                            new Expr.Literal(20)
+                                    )
+        );
+
+//        Decl decl = new Decl.Const(
+//                                    Arrays.asList(new Stmt.Assign(
+//                                            new Token(Token.TokenType.IDENT, "N", null, null),
+//                                            new Expr.Literal(10))
+//                                    ));
+        System.out.println(new AstPrinter().printDecl(decl));
+
     }
 
-    @Override
-    public String visitModuleDecl(Decl.Module decl) {
-        return "MODULE " + decl.modBody.accept(this);
-    }
-
-    @Override
-    public String visitConstDecl(Decl.Const decl) {
-        sb = new StringBuilder();
-        sb.append("CONST");
-        for (Stmt.Assign assignment : decl.assignList) {
-            sb.append(assignment.ident.lexeme).append(" = ").append(assignment.value.toString()).append(";");
-        }
-        return sb.toString();
-    }
-
-    @Override
-    public String visitVarDecl(Decl.Var decl) {
-        sb = new StringBuilder();
-        sb.append(decl.type.lexeme);
-        for (Token var : decl.varNames) {
-            sb.append(var.lexeme).append(", ");
-        }
-        return sb.toString();
-    }
-
-    @Override
-    public String visitProcDecl(Decl.Proc decl) {
-        return null;
-    }
-
-    @Override
-    public String visitSeqStmt(Stmt.Seq stmt) {
-        return null;
-    }
-
-    @Override
-    public String visitAssignStmt(Stmt.Assign stmt) {
-        return null;
-    }
-
-    @Override
-    public String visitHeaderMod(Mod.Header mod) {
-        return mod.ident.lexeme;
-    }
-
-    @Override
-    public String visitBodyMod(Mod.Body mod) {
-        sb = new StringBuilder();
-        sb.append(mod.consts.accept(this)).append('\n');
-        sb.append(mod.vars.accept(this)).append('\n');
-
-        sb.append("END ");
-        return sb.toString();
-    }
 }

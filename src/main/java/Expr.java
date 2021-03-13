@@ -11,8 +11,6 @@ abstract class Expr {
 
         R visitLogicalExpr(Logical expr);
 
-        R visitGroupingExpr(Grouping expr);
-
         R visitLiteral(Literal expr);
     }
 
@@ -77,20 +75,6 @@ abstract class Expr {
         @Override
         <R> R accept(Visitor<R> visitor) {
             return visitor.visitLogicalExpr(this);
-        }
-    }
-
-    static class Grouping extends Expr {
-
-        Expr expression;
-
-        public Grouping(Expr expression) {
-            this.expression = expression;
-        }
-
-        @Override
-        <R> R accept(Visitor<R> visitor) {
-            return visitor.visitGroupingExpr(this);
         }
     }
 

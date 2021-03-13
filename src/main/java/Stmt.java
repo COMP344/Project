@@ -11,6 +11,8 @@ abstract class Stmt {
 
         R visitAssignStmt(Assign stmt);
 
+        R visitExprStmt(ExprStmt expr);
+
     }
 
     static class Seq extends Stmt {
@@ -39,6 +41,19 @@ abstract class Stmt {
         @Override
         <R> R accept(Visitor<R> visitor) {
             return visitor.visitAssignStmt(this);
+        }
+    }
+
+    static class ExprStmt extends Stmt {
+        Expr expr;
+
+        public ExprStmt(Expr expr) {
+            this.expr = expr;
+        }
+
+        @Override
+        <R> R accept(Visitor<R> visitor) {
+            return visitor.visitExprStmt(this);
         }
     }
 }
