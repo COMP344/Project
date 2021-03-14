@@ -180,15 +180,14 @@ public class AstPrinter implements Expr.Visitor<String>, Decl.Visitor<String>, S
     }
 
     public static void main(String[] args) {
-//        Expr expr = new Expr.Binary(
-//                new Token(Token.TokenType.AST, "*", null, null),
-//                new Expr.Unary(
-//                        new Token(Token.TokenType.MINUS, "-", null, null),
-//                        new Expr.Literal(123)),
-//                new Expr.Literal(45.67));
+		/*
+		 * Expr expr = new Expr.Binary( new Token(Token.TokenType.AST, "*", null, null),
+		 * new Expr.Unary( new Token(Token.TokenType.MINUS, "-", null, null), new
+		 * Expr.Literal(123)), new Expr.Literal(45.67));
+		 * 
+		 * System.out.println(new AstPrinter().printExpr(expr));
+		 */
 //
-//        System.out.println(new AstPrinter().print(expr));
-
         Decl decl = new Decl.Module(
                 new Mod.Header(new Token(Token.TokenType.MODULE, "Assignments", null, null)),
                 new Mod.Body(
@@ -209,20 +208,15 @@ public class AstPrinter implements Expr.Visitor<String>, Decl.Visitor<String>, S
                 )
         );
 
-        Stmt stmts = new Stmt.Seq(
-                                    new Stmt.ExprStmt(
-                                            new Expr.Literal(10)
-                                    ),
-                                    new Stmt.ExprStmt(
-                                            new Expr.Literal(20)
-                                    )
-        );
+//        Stmt stmts = new Stmt.Seq(
+//                                    new Stmt.ExprStmt(
+//                                            new Expr.Literal(10)
+//                                    ),
+//                                    new Stmt.ExprStmt(
+//                                            new Expr.Literal(20)
+//                                    )
+//        );
 
-//        Decl decl = new Decl.Const(
-//                                    Arrays.asList(new Stmt.Assign(
-//                                            new Token(Token.TokenType.IDENT, "N", null, null),
-//                                            new Expr.Literal(10))
-//                                    ));
         System.out.println(new AstPrinter().printDecl(decl));
 
     }
