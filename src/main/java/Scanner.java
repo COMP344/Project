@@ -12,59 +12,35 @@ public class Scanner implements IScanner {
     private int current = 0;
     private int line = 1;
     private int column = 1;
-    Position position;
+    private int begin_column = 1;
 
     TokenFactory tokenFactory;
 
-    private static final Map<String, Token.TokenType> KEYWORDS = new HashMap<>();
-    private static final Map<String, Token.TokenType> SYMBOLS = new HashMap<>();
+    private static final Map<String, String> SYMBOLS = new HashMap<>();
 
     static{
-        KEYWORDS.put("BEGIN", Token.TokenType.BEGIN);
-        KEYWORDS.put("BOOL", Token.TokenType.BOOL);
-        KEYWORDS.put("CONST", Token.TokenType.CONST);
-        KEYWORDS.put("DEC", Token.TokenType.DEC);
-        KEYWORDS.put("DO", Token.TokenType.DO);
-        KEYWORDS.put("ELSE", Token.TokenType.ELSE);
-        KEYWORDS.put("ELSIF", Token.TokenType.ELSIF);
-        KEYWORDS.put("END", Token.TokenType.END);
-        KEYWORDS.put("IF", Token.TokenType.IF);
-        KEYWORDS.put("INC", Token.TokenType.INC);
-        KEYWORDS.put("INT", Token.TokenType.INT);
-        KEYWORDS.put("MODULE", Token.TokenType.MODULE);
-        KEYWORDS.put("OR", Token.TokenType.OR);
-        KEYWORDS.put("PROCEDURE", Token.TokenType.PROCED);
-        KEYWORDS.put("REPEAT", Token.TokenType.REPEAT);
-        KEYWORDS.put("RETURN", Token.TokenType.RETURN);
-        KEYWORDS.put("ROL", Token.TokenType.ROL);
-        KEYWORDS.put("ROR", Token.TokenType.ROR);
-        KEYWORDS.put("SET", Token.TokenType.SET);
-        KEYWORDS.put("THEN", Token.TokenType.THEN);
-        KEYWORDS.put("UNTIL", Token.TokenType.UNTIL);
-        KEYWORDS.put("WHILE", Token.TokenType.WHILE);
-
-        SYMBOLS.put("!", Token.TokenType.OP);
-        SYMBOLS.put("#", Token.TokenType.NEQ);
-        SYMBOLS.put("&", Token.TokenType.AND);
-        SYMBOLS.put("(", Token.TokenType.RPAREN);
-        SYMBOLS.put(")", Token.TokenType.LPAREN);
-        SYMBOLS.put("*", Token.TokenType.AST);
-        SYMBOLS.put("+", Token.TokenType.PLUS);
-        SYMBOLS.put(",", Token.TokenType.COMMA);
-        SYMBOLS.put("-", Token.TokenType.MINUS);
-        SYMBOLS.put(".", Token.TokenType.PERIOD);
-        SYMBOLS.put("/", Token.TokenType.SLASH);
-        SYMBOLS.put(":", Token.TokenType.COLON);
-        SYMBOLS.put(":=", Token.TokenType.BECOMES);
-        SYMBOLS.put(";", Token.TokenType.SEMICOLON);
-        SYMBOLS.put("<", Token.TokenType.LSS);
-        SYMBOLS.put("<=", Token.TokenType.LEQ);
-        SYMBOLS.put("=", Token.TokenType.EQL);
-        SYMBOLS.put(">", Token.TokenType.GTR);
-        SYMBOLS.put(">=", Token.TokenType.GEQ);
-        SYMBOLS.put("?", Token.TokenType.QUERY);
-        SYMBOLS.put("~", Token.TokenType.NOT);
-        SYMBOLS.put("$", Token.TokenType.HEX);
+        SYMBOLS.put("!", "OP");
+        SYMBOLS.put("#", "NEQ");
+        SYMBOLS.put("&", "AND");
+        SYMBOLS.put("(", "RPAREN");
+        SYMBOLS.put(")", "LPAREN");
+        SYMBOLS.put("*", "AST");
+        SYMBOLS.put("+", "PLUS");
+        SYMBOLS.put(",", "COMMA");
+        SYMBOLS.put("-", "MINUS");
+        SYMBOLS.put(".", "PERIOD");
+        SYMBOLS.put("/", "SLASH");
+        SYMBOLS.put(":", "COLON");
+        SYMBOLS.put(":=", "BECOMES");
+        SYMBOLS.put(";", "SEMICOLON");
+        SYMBOLS.put("<", "LSS");
+        SYMBOLS.put("<=", "LEQ");
+        SYMBOLS.put("=", "EQL");
+        SYMBOLS.put(">", "GTR");
+        SYMBOLS.put(">=", "GEQ");
+        SYMBOLS.put("?", "QUERY");
+        SYMBOLS.put("~", "NOT");
+        SYMBOLS.put("$", "HEX");
     }
 
     Scanner(String source) {
@@ -76,16 +52,15 @@ public class Scanner implements IScanner {
     public List<IToken> scanTokens() {
         while (!isAtEnd()) {
             start = current;
-            position = new Position(line, column);
             scanToken();
         }
-        tokens.add(tokenFactory.makeEofToken(position.getLineNumber(), position.getColumnNumber()));
+        tokens.add(tokenFactory.makeEofToken(line, column));
         return tokens;
     }
 
     private void scanToken() {
         char c = advance();
-        position = new Position(line, column - 1);
+        begin_column = column - 1;
 
         if (isSymbol(c)) {
             scanSymbol();
@@ -109,9 +84,9 @@ public class Scanner implements IScanner {
        char c = source.charAt(start);
         switch (c) {
             case '$' -> scanHexadecimal();
-            case '<' -> addToken(match('=') ? Token.TokenType.LEQ : Token.TokenType.LSS);
-            case '>' -> addToken(match('=') ? Token.TokenType.GEQ : Token.TokenType.GTR);
-            case ':' -> addToken(match('=') ? Token.TokenType.BECOMES : Token.TokenType.COLON);
+            case '<' -> addToken(match('=') ? "LEQ" : "LSS");
+            case '>' -> addToken(match('=') ? "GEQ" : "GTR");
+            case ':' -> addToken(match('=') ? "BECOMES" : "COLON");
             default -> addToken(SYMBOLS.get("" + c));
         }
     }
@@ -125,7 +100,7 @@ public class Scanner implements IScanner {
         char secondHex = advance();
         if (isHexadecimal(firstHex) && isHexadecimal(secondHex)) {
             int value = Character.digit(firstHex, 16) * 16 + Character.digit(secondHex, 16);
-            addToken(Token.TokenType.NUMBER, value);
+            addToken("NUMBER", value);
         }
     }
 
@@ -146,7 +121,7 @@ public class Scanner implements IScanner {
         }
 
         double d = Double.parseDouble(source.substring(start, current));
-        addToken(Token.TokenType.NUMBER, d);
+        addToken("NUMBER", d);
     }
 
     private boolean isAlpha(char c) {
@@ -158,7 +133,7 @@ public class Scanner implements IScanner {
             advance();
         }
         String text = source.substring(start, current);
-        addToken(KEYWORDS.getOrDefault(text, Token.TokenType.IDENT));
+        addToken(text);
     }
 
     private boolean isWhitespace(char c) {
@@ -182,13 +157,13 @@ public class Scanner implements IScanner {
         return source.charAt(current - 1);
     }
 
-    private void addToken(Token.TokenType type) {
+    private void addToken(String type) {
         addToken(type, null);
     }
 
-    private void addToken(Token.TokenType type, Object literal) {
+    private void addToken(String type, Object literal) {
         String text = source.substring(start, current);
-        tokens.add(tokenFactory.makeToken(type, text, literal, position.getLineNumber(), position.getColumnNumber()));
+        tokens.add(tokenFactory.makeToken(type, text, literal, line, begin_column));
     }
 
     private boolean match(char expected) {

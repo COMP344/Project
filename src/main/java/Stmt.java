@@ -1,36 +1,37 @@
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-abstract class Stmt {
+abstract class Stmt implements INode {
 
-    abstract <R> R accept(Visitor<R> visitor);
+    static class Var extends Stmt {
+        final IToken type;
+        final List<IToken> varNames;
 
-    interface Visitor<R> {
-        R visitSeqStmt(Seq stmt);
+        public Var(Token type, List<IToken> varNames) {
+            this.type = type;
+            this.varNames = varNames;
+        }
 
-        R visitAssignStmt(Assign stmt);
-
-        R visitExprStmt(ExprStmt expr);
-
+        @Override
+        public <R> R accept(IVisitor<R> visitor) {
+            return visitor.visitVarStmt(this);
+        }
     }
 
     static class Seq extends Stmt {
         List<Stmt> stmtList;
 
-        public Seq(Stmt... stmts) {
-            this.stmtList = new ArrayList<>();
-            this.stmtList.addAll(Arrays.asList(stmts));
+        public Seq(List<Stmt> statements) {
+            this.stmtList = statements;
         }
 
         @Override
-        <R> R accept(Visitor<R> visitor) {
+        public <R> R accept(IVisitor<R> visitor) {
             return visitor.visitSeqStmt(this);
         }
     }
 
     static class Assign extends Stmt {
-        Token ident;
+        IToken ident;
         Expr value;
 
         public Assign(Token ident, Expr value) {
@@ -39,7 +40,7 @@ abstract class Stmt {
         }
 
         @Override
-        <R> R accept(Visitor<R> visitor) {
+        public <R> R accept(IVisitor<R> visitor) {
             return visitor.visitAssignStmt(this);
         }
     }
@@ -52,8 +53,25 @@ abstract class Stmt {
         }
 
         @Override
-        <R> R accept(Visitor<R> visitor) {
+        public <R> R accept(IVisitor<R> visitor) {
             return visitor.visitExprStmt(this);
+        }
+    }
+
+    static class IF extends Stmt {
+        final Expr condition;
+        final Stmt thenBranch;
+        final Stmt elseBranch;
+
+        public IF(Expr condition, Stmt thenBranch, Stmt elseBranch) {
+            this.condition = condition;
+            this.thenBranch = thenBranch;
+            this.elseBranch = elseBranch;
+        }
+
+        @Override
+        public <R> R accept(IVisitor<R> visitor) {
+            return visitor.visitIfStmt(this);
         }
     }
 }

@@ -16,13 +16,14 @@ public class Token implements IToken{
 
     Object literal;
 
-    Position position;
+    int line, column;
 
-    public Token(TokenType type, String lexeme, Object literal, Position position) {
+    public Token(TokenType type, String lexeme, Object literal, int line, int column) {
         this.type = type;
         this.lexeme = lexeme;
         this.literal = literal;
-        this.position = position;
+        this.line = line;
+        this.column = column;
     }
 
     @Override
@@ -41,11 +42,17 @@ public class Token implements IToken{
     }
 
     @Override
-    public Position getPosition() {
-        return this.position;
+    public int getLineNumber() {
+        return this.line;
     }
 
+    @Override
+    public int getColNumber() {
+        return this.column;
+    }
+
+
     public String toString() {
-        return type + " " + lexeme + " " + (literal != null ? literal + " " : "") + position;
+        return type + " " + lexeme + " " + (literal != null ? literal + " " : "") + " line:" + getLineNumber() + " col:" + getColNumber();
     }
 }

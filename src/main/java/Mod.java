@@ -1,24 +1,14 @@
-abstract class Mod {
-
-    abstract <R> R accept(Mod.Visitor<R> visitor);
-
-    interface Visitor<R> {
-
-        R visitHeaderMod(Header mod);
-
-        R visitBodyMod(Body mod);
-
-    }
+abstract class Mod implements INode {
 
     static class Header extends Mod {
-        Token ident;
+        IToken ident;
 
-        public Header(Token ident) {
+        public Header(IToken ident) {
             this.ident = ident;
         }
 
         @Override
-        <R> R accept(Mod.Visitor<R> visitor) {
+        public <R> R accept(IVisitor<R> visitor) {
             return visitor.visitHeaderMod(this);
         }
     }
@@ -37,7 +27,7 @@ abstract class Mod {
         }
 
         @Override
-        <R> R accept(Visitor<R> visitor) {
+        public <R> R accept(IVisitor<R> visitor) {
             return visitor.visitBodyMod(this);
         }
     }

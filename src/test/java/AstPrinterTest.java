@@ -2,7 +2,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class AstPrinterTest {
     AstPrinter astPrinter;
@@ -14,12 +16,14 @@ public class AstPrinterTest {
 
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
+        List<Stmt> statement_list = new ArrayList<>();
+        statement_list.add(simpleStmt);
         astPrinter = new AstPrinter();
         simpleExpr = new Expr.Literal(10);
         simpleStmt = new Stmt.ExprStmt(simpleExpr);
-        simpleModHead = new Mod.Header(new Token(Token.TokenType.MODULE, "Test", null, null));
-        simpleModBody = new Mod.Body(null,null,null, new Stmt.Seq(simpleStmt));
+        simpleModHead = new Mod.Header(new Token(Token.TokenType.MODULE, "Test", null, 0, 0));
+        simpleModBody = new Mod.Body(null, null, null, new Stmt.Seq(statement_list));
         simpleDecl = new Decl.Module((Mod.Header) simpleModHead, (Mod.Body) simpleModBody);
     }
 
@@ -50,25 +54,25 @@ public class AstPrinterTest {
 
     @Test
     public void testVisitUnaryExpr() {
-        Expr.Unary unary = new Expr.Unary(new Token(Token.TokenType.PLUS, "+", null, null), simpleExpr);
+        Expr.Unary unary = new Expr.Unary(new Token(Token.TokenType.PLUS, "+", null, 0, 0), simpleExpr);
         Assert.assertEquals("Expected: (+ 10)", "(+ 10)", astPrinter.visitUnaryExpr(unary));
     }
 
     @Test
     public void testVisitBinaryExpr() {
-        Expr.Binary binary = new Expr.Binary(new Token(Token.TokenType.PLUS, "+", null, null), simpleExpr, simpleExpr);
+        Expr.Binary binary = new Expr.Binary(new Token(Token.TokenType.PLUS, "+", null, 0, 0), simpleExpr, simpleExpr);
         Assert.assertEquals("Expected: (+ 10 10)", "(+ 10 10)", astPrinter.visitBinaryExpr(binary));
     }
 
     @Test
     public void testVisitAssignExpr() {
-        Expr.Assign assign = new Expr.Assign(new Token(Token.TokenType.IDENT, "N", null, null), simpleExpr);
+        Expr.Assign assign = new Expr.Assign(new Token(Token.TokenType.IDENT, "N", null, 0, 0), simpleExpr);
         Assert.assertEquals("Expected: (= N 10)", "(= N 10)", astPrinter.visitAssignExpr(assign));
     }
 
     @Test
     public void testVisitLogicalExpr() {
-        Expr.Logical logical = new Expr.Logical(new Expr.Literal(5), new Token(Token.TokenType.LEQ, "<=", null, null), simpleExpr);
+        Expr.Logical logical = new Expr.Logical(new Expr.Literal(5), new Token(Token.TokenType.LEQ, "<=", null, 0, 0), simpleExpr);
         Assert.assertEquals("Expected: (<= 5 10)", "(<= 5 10)", astPrinter.visitLogicalExpr(logical));
     }
 
@@ -88,22 +92,22 @@ public class AstPrinterTest {
 
     @Test
     public void testVisitConstDecl() {
-        Decl.Const consts = new Decl.Const(
-                Arrays.asList(new Stmt.Assign(
-                        new Token(Token.TokenType.IDENT, "N", null, null),
+        Decl.Const constants = new Decl.Const(
+                Collections.singletonList(new Stmt.Assign(
+                        new Token(Token.TokenType.IDENT, "N", null, 0, 0),
                         new Expr.Literal(10))
                 ));
-        Assert.assertEquals("Expected: CONST N = 10;" , "CONST N = 10;\n", astPrinter.visitConstDecl(consts));
+        Assert.assertEquals("Expected: CONST N = 10;", "CONST N = 10;\n", astPrinter.visitConstDecl(constants));
     }
 
     @Test
-    public void testVisitVarDecl() {
-        Decl.Var vars = new Decl.Var(
-                new Token(Token.TokenType.INT, "INT", null, null),
-                Arrays.asList(
-                        new Token(Token.TokenType.IDENT, "x", null, null)
+    public void testVisitVarStmt() {
+        Stmt.Var vars = new Stmt.Var(
+                new Token(Token.TokenType.INT, "INT", null, 0, 0),
+                Collections.singletonList(
+                        new Token(Token.TokenType.IDENT, "x", null, 0, 0)
                 ));
-        Assert.assertEquals("Expected:  INT x;" , "INT x;\n", astPrinter.visitVarDecl(vars));
+        Assert.assertEquals("Expected:  INT x;", "INT x;\n", astPrinter.visitVarStmt(vars));
     }
 
     @Test
@@ -112,20 +116,21 @@ public class AstPrinterTest {
 
     @Test
     public void testVisitSeqStmt() {
-        Stmt.Seq stmts = new Stmt.Seq(
-                new Stmt.ExprStmt(
-                        new Expr.Literal(10)
-                ),
-                new Stmt.ExprStmt(
-                        new Expr.Literal(20)
-                ));
+        List<Stmt> statement_list = new ArrayList<>();
+        statement_list.add(new Stmt.ExprStmt(
+                new Expr.Literal(10)
+        ));
+        statement_list.add(new Stmt.ExprStmt(
+                new Expr.Literal(20)
+        ));
+        Stmt.Seq stmts = new Stmt.Seq(statement_list);
         Assert.assertEquals("Expected: \n10\n20", "10\n20\n", astPrinter.visitSeqStmt(stmts));
     }
 
     @Test
     public void testVisitAssignStmt() {
         Stmt.Assign assign = new Stmt.Assign(
-                new Token(Token.TokenType.IDENT, "x", null, null),
+                new Token(Token.TokenType.IDENT, "x", null, 0, 0),
                 simpleExpr
         );
         Assert.assertEquals("Expected: x := 10", "x := 10", astPrinter.visitAssignStmt(assign));

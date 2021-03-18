@@ -6,7 +6,9 @@ public interface IToken {
 
     Object getLiteral();
 
-    Position getPosition();
+    int getLineNumber();
+
+    int getColNumber();
 
     String toString();
 }
