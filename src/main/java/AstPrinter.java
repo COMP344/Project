@@ -38,7 +38,7 @@ public class AstPrinter implements IVisitor<String> {
 
     @Override
     public String visitAssignExpr(Expr.Assign expr) {
-        return parenthesizeAssignExpr(expr.name.getLexeme(), expr.value);
+        return expr.name.getLexeme() + " := " + expr.value.accept(this) +";";
     }
 
     @Override
@@ -53,7 +53,7 @@ public class AstPrinter implements IVisitor<String> {
 
     @Override
     public String visitVariableExpr(Expr.Variable var) {
-        return null;
+        return var.name.getLexeme();
     }
 
     @Override
@@ -90,6 +90,7 @@ public class AstPrinter implements IVisitor<String> {
         String modName = decl.modHeader.ident.getLexeme();
         sb.append(decl.modHeader.accept(this));
         sb.append(decl.modBody.accept(this));
+        sb.append("\n");
         sb.append("END ").append(modName).append(".");
         return sb.toString();
     }
@@ -107,7 +108,11 @@ public class AstPrinter implements IVisitor<String> {
 
     @Override
     public String visitVarDecl(Decl.Var decl) {
-        return null;
+        StringBuilder sb = new StringBuilder();
+        for (Stmt.Var var_statement : decl.var_list) {
+            sb.append(var_statement.accept(this));
+        }
+        return sb.toString();
     }
 
     @Override
@@ -136,8 +141,9 @@ public class AstPrinter implements IVisitor<String> {
     @Override
     public String visitSeqStmt(Stmt.Seq stmt) {
         StringBuilder sb = new StringBuilder();
+        sb.append(insertTabs()).append("BEGIN ");
         for (Stmt stmt1 : stmt.stmtList) {
-            sb.append(insertTabs()).append(stmt1.accept(this)).append("\n");
+            sb.append(stmt1.accept(this)).append(" ");
         }
         return sb.toString();
     }

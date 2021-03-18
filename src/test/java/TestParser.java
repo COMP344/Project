@@ -31,11 +31,10 @@ public class TestParser {
 
         AstPrinter printer = new AstPrinter();
 
+        System.out.println("-----AstPrinter-----");
         for (Decl declaration : declarations) {
-            printer.printDecl(declaration);
+            System.out.println(printer.printDecl(declaration));
         }
-
-        System.out.println("PEACE! :)");
-
+        System.out.println("--------------------");
     }
 }
