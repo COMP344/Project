@@ -16,22 +16,14 @@ public class Parser {
         List<Decl> declarations = new ArrayList<>();
 
         while(!isAtEnd()) {
-             declarations.add(declarations());
+             declarations.add(module_declaration());
         }
 
         return declarations;
     }
 
-    private Decl declarations() {
-        if (match(Token.TokenType.MODULE)) {
-            return module_declaration();
-        } else {
-            //error
-            return null;
-        }
-    }
-
     private Decl module_declaration() {
+        consume(Token.TokenType.MODULE, "Expected 'MODULE' keyword");
         Mod.Header header = module_header();
         Mod.Body body = module_body();
         return new Decl.Module(header, body);
@@ -41,35 +33,32 @@ public class Parser {
         IToken name = consume(Token.TokenType.IDENT, "Expect Module name");
         assert name != null;
         current_module_name = name.getLexeme();
-        if (match(Token.TokenType.SEMICOLON)) {
-            return new Mod.Header(name);
-        } else {
-            //error
-            return null;
-        }
+        consume(Token.TokenType.SEMICOLON, "Expected ';' after module header");
+        return new Mod.Header(name);
     }
 
     private Mod.Body module_body() {
         Decl.Const const_declaration = null;
-        Decl.Var variable_declaration = null;
-        Decl.Proc procedure_declaration = null;
+        List<Decl.Var> variable_declarations = new ArrayList<>();
+        List<Decl.Procedure> procedure_declaration = new ArrayList<>();
+        Stmt.Seq statement_sequence = null;
 
         if (check(Token.TokenType.CONST)) {
             const_declaration = constant_declaration();
         }
-        if (check(Token.TokenType.INT) || check(Token.TokenType.SET) || check(Token.TokenType.BOOL)) {
-            variable_declaration = variable_declaration();
-            consume(Token.TokenType.SEMICOLON, "Expect ';'");
+        while (nextIsType()) {
+            variable_declarations.add(variable_declaration());
         }
         while (match(Token.TokenType.PROCED)) {
-            procedure_declaration = procedure_declaration();
+            procedure_declaration.add(procedure_declaration());
         }
-        consume(Token.TokenType.BEGIN, "Expect 'BEGIN'");
-        Stmt.Seq statement_sequence = statement_sequence();
+        if (match(Token.TokenType.BEGIN)) {
+            statement_sequence = statement_sequence();
+        }
         consume(Token.TokenType.END, "Expect 'END'");
         if (endOfModule()) {
             consume(Token.TokenType.PERIOD, "Expect a '.'");
-            return new Mod.Body(const_declaration,variable_declaration,procedure_declaration,statement_sequence);
+            return new Mod.Body(const_declaration,variable_declarations,procedure_declaration,statement_sequence);
         } else {
             //error
             return null;
@@ -92,95 +81,241 @@ public class Parser {
         List<Stmt> statements = new ArrayList<>();
         do {
             statements.add(statement());
-        } while (!check(Token.TokenType.END));
+        } while (match(Token.TokenType.SEMICOLON));
         return new Stmt.Seq(statements);
     }
 
+    private Stmt.Inline inline_statement_sequence() {
+        List<Stmt> statements = new ArrayList<>();
+        do {
+            statements.add(statement());
+        } while (match(Token.TokenType.SEMICOLON));
+        return new Stmt.Inline(statements);
+    }
+
     private Stmt statement() {
-        if (match(Token.TokenType.IF)) return ifStatement();
-        //if (check(Token.TokenType.IDENT)) return assignStatement();
+        if (check(Token.TokenType.OP)) return commandStatement();
+        if (check(Token.TokenType.QUERY)) return queryStatement();
+        if (check(Token.TokenType.IF)) return ifStatement();
+        if (check(Token.TokenType.WHILE)) return whileStatement();
+        if (check(Token.TokenType.REPEAT)) return repeatStatement();
+        if (check(Token.TokenType.IDENT)) {
+            if (next().getTokenType() == Token.TokenType.BECOMES)
+                return assignStatement();
+            else
+                return callStatement();
+        }
+
         //error
-        return expressionStatement();
+        return null;
+    }
+
+    private Stmt callStatement() {
+        IToken ident = ident();
+        Expr expression = null;
+        if (match(Token.TokenType.LPAREN)) {
+            expression = expression();
+            consume(Token.TokenType.RPAREN, "Expect ')' after parameter.");
+        }
+        return new Stmt.Call(ident, expression);
+    }
+
+    private Stmt repeatStatement() {
+        consume(Token.TokenType.REPEAT, "Expected 'REPEAT' keyword.");
+        Stmt.Seq statement_sequence = statement_sequence();
+        Expr condition = null;
+        if (match(Token.TokenType.UNTIL)) {
+            condition = expression();
+        } else {
+            consume(Token.TokenType.END, "Expected 'END' keyword.");
+        }
+        return new Stmt.Repeat(statement_sequence, condition);
+    }
+
+    private Stmt whileStatement() {
+        consume(Token.TokenType.WHILE, "Expected 'WHILE' keyword.");
+        Expr condition = expression();
+        consume(Token.TokenType.DO, "Expected 'DO' keyword.");
+        Stmt.Seq statement_sequence = statement_sequence();
+        List<Stmt.If> elseIfBranches = new ArrayList<>();
+        while (match(Token.TokenType.ELSIF)) {
+            elseIfBranches.add((Stmt.If) ifStatement());
+        }
+        consume(Token.TokenType.END, "Expected 'END' keyword.");
+        return new Stmt.While(condition, statement_sequence, elseIfBranches);
+    }
+
+    private Stmt queryStatement() {
+        consume(Token.TokenType.QUERY, "Expected '?' keyword.");
+        boolean negate = match(Token.TokenType.NOT);
+        IToken ident = ident();
+        IToken indexToken = null;
+        if (match(Token.TokenType.PERIOD)) {
+            indexToken = consume(Token.TokenType.NUMBER, "Expected a number.");
+        }
+        double index;
+        if (indexToken != null) {
+            index = (double) indexToken.getLiteral();
+        } else {
+            index = -1;
+        }
+        return new Stmt.Query(negate, ident, index);
+    }
+
+    private Stmt commandStatement() {
+        boolean negate = false;
+        IToken ident = null;
+        double index = -1;
+        IToken operation = null;
+
+        consume(Token.TokenType.OP, "Expected '!' keyword.");
+        if (match(Token.TokenType.INC, Token.TokenType.DEC, Token.TokenType.ROL, Token.TokenType.ROR)) {
+            operation = previous();
+            ident = ident();
+        } else {
+            negate = match(Token.TokenType.NOT);
+            ident = ident();
+            IToken indexToken = null;
+            if (match(Token.TokenType.PERIOD)) {
+                indexToken = consume(Token.TokenType.NUMBER, "Expected a number.");
+            }
+            if (indexToken != null) {
+                index = (double) indexToken.getLiteral();
+            } else {
+                index = -1;
+            }
+        }
+        return new Stmt.Command(negate, ident, index, operation);
     }
 
     private Stmt assignStatement() {
         IToken ident = consume(Token.TokenType.IDENT, "Expect an identifier.");
-        Expr value = expression();
-        return new Stmt.Assign((Token) ident, value);
+        Expr value = null;
+        if (match(Token.TokenType.BECOMES)) {
+            value = expression();
+        }
+        return new Stmt.Assign((Token) ident,value);
     }
 
     private Stmt expressionStatement() {
         Expr expr = expression();
-        consume(Token.TokenType.SEMICOLON, "Expect ';' after expression");
         return new Stmt.ExprStmt(expr);
     }
 
 
     private Stmt ifStatement() {
+        consume(Token.TokenType.IF, "Expected 'IF' keyword.");
         Expr condition = expression();
+        List<Stmt.ElseIf> elseIfBranches = new ArrayList<>();
+
         consume(Token.TokenType.THEN, "Expect 'THEN' after condition.");
 
-        Stmt thenBranch = statement();
+        Stmt thenBranch = inline_statement_sequence();
+
+        while (check(Token.TokenType.ELSIF)) {
+            elseIfBranches.add(elseIfStatement());
+        }
 
         Stmt elseBranch = null;
         if (match(Token.TokenType.ELSE)) {
-            elseBranch = statement();
+            elseBranch = inline_statement_sequence();
         }
+        consume(Token.TokenType.END, "Expect 'END' to finish if statement.");
 
-        return new Stmt.IF(condition, thenBranch, elseBranch);
+        return new Stmt.If(condition, thenBranch, elseBranch, elseIfBranches);
     }
 
-    private Decl.Proc procedure_declaration() {
-        IToken name = consume(Token.TokenType.IDENT, "Expect name of procedure.");
-        IToken parameter = null;
-        IToken return_type = null;
-        Decl.Var variables = null;
-        Stmt.Seq body = null;
-        Expr return_expr = null;
+    private Stmt.ElseIf elseIfStatement() {
+        consume(Token.TokenType.ELSIF, "Expected 'ELSIF' keyword.");
+        Expr condition = expression();
+        consume(Token.TokenType.THEN, "Expect 'THEN' after condition.");
+        Stmt thenBranch = inline_statement_sequence();
+        return new Stmt.ElseIf(condition,thenBranch);
+    }
 
-        assert name != null;
-        current_procedure_name = name.getLexeme();
-
-        if (match(Token.TokenType.LPAREN)) {
-            parameter = consume(Token.TokenType.IDENT, "Expect parameter identifier.");
-            consume(Token.TokenType.RPAREN, "Expect ')' after parameter.");
-        }
-        if (match(Token.TokenType.COLON)) {
-            if (match(Token.TokenType.INT)) return_type = previous();
-            if (match(Token.TokenType.SET)) return_type = previous();
-            if (match(Token.TokenType.BOOL)) return_type = previous();
-        }
-        variables = variable_declaration();
-        if (match(Token.TokenType.BEGIN)) {
-            body = statement_sequence();
-        }
-        if (match(Token.TokenType.RETURN)) {
-            return_expr = expression();
-        }
-        consume(Token.TokenType.END, "Expect 'END'");
+    private Decl.Procedure procedure_declaration() {
+        Proc.Header header = procedure_header();
+        consume(Token.TokenType.SEMICOLON, "Expected ';' between head and body");
+        Proc.Body body = procedure_body();
         if (endOfProcedure()) {
-            return new Decl.Proc(name, parameter, variables, body, return_type, return_expr);
+            return new Decl.Procedure(header, body);
         } else {
             //error
             return null;
         }
     }
 
+    private Proc.Header procedure_header() {
+        IToken name = ident();
+        assert name != null;
+        current_procedure_name = name.getLexeme();
+        Proc.Param param = null;
+        IToken return_type = null;
+        if (match(Token.TokenType.LPAREN)) {
+            param = formal_parameter();
+            consume(Token.TokenType.RPAREN, "Expect ')' after parameter.");
+        }
+        if (match(Token.TokenType.COLON)) {
+            return_type = type();
+        }
+        return new Proc.Header(name, param, return_type);
+    }
+
+    private Proc.Param formal_parameter() {
+        IToken type = type();
+        IToken name = ident();
+        return new Proc.Param(name, type);
+    }
+
+    private IToken ident() {
+        return consume(Token.TokenType.IDENT, "Expected an identity.");
+    }
+
+    private IToken type() {
+        if (match(Token.TokenType.INT, Token.TokenType.SET, Token.TokenType.BOOL)) {
+            return previous();
+        } else {
+            return null;
+        }
+    }
+
+    private Proc.Body procedure_body() {
+        List<Decl.Var> variable_declarations = new ArrayList<>();
+        Stmt.Seq stmts = null;
+        Expr return_expr = null;
+
+        while (nextIsType()) {
+            variable_declarations.add(variable_declaration());
+            consume(Token.TokenType.SEMICOLON, "Expected ';' after variable declaration.");
+        }
+        if (match(Token.TokenType.BEGIN)) {
+            stmts = statement_sequence();
+        }
+        if (match(Token.TokenType.RETURN)) {
+            return_expr = expression();
+        }
+        consume(Token.TokenType.END, "Expected 'END' keyword.");
+        if (endOfProcedure()) {
+            return new Proc.Body(variable_declarations, stmts, return_expr);
+        } else {
+            //error
+            return null;
+        }
+    }
+
+    private boolean nextIsType() {
+        return check(Token.TokenType.INT) || check(Token.TokenType.SET) || check(Token.TokenType.BOOL);
+    }
+
     private Decl.Var variable_declaration() {
-        List<Stmt.Var> declVarList = new ArrayList<>();
-        do {
-            IToken type = null;
-            if (match(Token.TokenType.INT)) type = previous();
-            if (match(Token.TokenType.SET)) type = previous();
-            if (match(Token.TokenType.BOOL)) type = previous();
-            List<IToken> var_list = new ArrayList<>();
-            do {
-                var_list.add(consume(Token.TokenType.IDENT, "Expect identifier."));
-            } while (match(Token.TokenType.COMMA));
-            consume(Token.TokenType.SEMICOLON, "Expect ';'");
-            declVarList.add(new Stmt.Var((Token) type, var_list));
-        } while (check(Token.TokenType.INT) || check(Token.TokenType.SET) || check(Token.TokenType.BOOL));
-        return new Decl.Var(declVarList);
+        IToken type = type();
+        List<IToken> variables = new ArrayList<>();
+
+        while (check(Token.TokenType.IDENT) || match(Token.TokenType.COMMA)) {
+            variables.add(ident());
+        }
+        consume(Token.TokenType.SEMICOLON, "Expected ';' after variable declaration");
+        return new Decl.Var(type, variables);
     }
 
     private Decl.Const constant_declaration() {
@@ -196,15 +331,6 @@ public class Parser {
         }
 
         return new Decl.Const(assignList);
-    }
-
-    private Stmt.Assign assign_statement() {
-        IToken ident = consume(Token.TokenType.IDENT, "Expect an identifier.");
-        Expr value = null;
-        if (match(Token.TokenType.BECOMES)) {
-            value = expression();
-        }
-        return new Stmt.Assign((Token) ident,value);
     }
 
     private Expr expression() {
@@ -405,6 +531,10 @@ public class Parser {
 
     private IToken previous() {
         return tokens.get(current - 1);
+    }
+
+    private IToken next() {
+        return tokens.get(current + 1);
     }
 
 

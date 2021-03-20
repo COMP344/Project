@@ -13,7 +13,6 @@ public class TestParser {
         } else {
             runScanner(args[0]);
         }
-
     }
 
     private static void runScanner(String path) throws IOException {

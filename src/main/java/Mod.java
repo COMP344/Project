@@ -1,3 +1,5 @@
+import java.util.List;
+
 abstract class Mod implements INode {
 
     static class Header extends Mod {
@@ -14,15 +16,15 @@ abstract class Mod implements INode {
     }
 
     static class Body extends Mod {
-        Decl.Const consts;
-        Decl.Var vars;
-        Decl.Proc proc;
+        Decl.Const constants;
+        List<Decl.Var> variable_declarations;
+        List<Decl.Procedure> procedure_declarations;
         Stmt.Seq seqStmt;
 
-        public Body(Decl.Const consts, Decl.Var vars, Decl.Proc proc, Stmt.Seq seqStmt) {
-            this.consts = consts;
-            this.vars = vars;
-            this.proc = proc;
+        public Body(Decl.Const constants, List<Decl.Var> variable_declarations, List<Decl.Procedure> procedure_declarations, Stmt.Seq seqStmt) {
+            this.constants = constants;
+            this.variable_declarations = variable_declarations;
+            this.procedure_declarations = procedure_declarations;
             this.seqStmt = seqStmt;
         }
 
