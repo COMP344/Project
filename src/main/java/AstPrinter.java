@@ -241,7 +241,7 @@ public class AstPrinter implements IVisitor<String> {
     @Override
     public String visitQueryStmt(Stmt.Query query) {
         StringBuilder sb = new StringBuilder();
-        sb.append("? ");
+        sb.append("?");
         if (!query.bool) sb.append("~");
         sb.append(query.ident.getLexeme());
         if (query.index != -1) {
@@ -254,7 +254,7 @@ public class AstPrinter implements IVisitor<String> {
     public String visitCommandStmt(Stmt.Command command) {
         StringBuilder sb = new StringBuilder();
         if (command.operation.getTokenType().equals(Token.TokenType.OP)) {
-            sb.append("! ");
+            sb.append("!");
             if (!command.bool) sb.append("~");
             sb.append(command.ident.getLexeme());
             if (command.index != -1) {
@@ -357,53 +357,5 @@ public class AstPrinter implements IVisitor<String> {
     private String insertTabs() {
         return "\t".repeat(Math.max(0, currentTabs));
     }
-
-//    public static void main(String[] args) {
-//        Expr expr = new Expr.Binary(
-//                new Token(Token.TokenType.AST, "*", null, null),
-//                new Expr.Unary(
-//                        new Token(Token.TokenType.MINUS, "-", null, null),
-//                        new Expr.Literal(123)),
-//                new Expr.Literal(45.67));
-//
-//        System.out.println(new AstPrinter().print(expr));
-//
-//        Decl decl = new Decl.Module(
-//                new Mod.Header(new Token(Token.TokenType.MODULE, "Assignments", null, null)),
-//                new Mod.Body(
-//                        new Decl.Const(
-//                                  Arrays.asList(new Stmt.Assign(
-//                                            new Token(Token.TokenType.IDENT, "N", null, null),
-//                                            new Expr.Literal(10))
-//                        )
-//                        ),
-//                        new Decl.Var(
-//                                new Token(Token.TokenType.INT, "INT", null, null),
-//                                Arrays.asList(
-//                                        new Token(Token.TokenType.IDENT, "x", null, null)
-//                                )
-//                        ),
-//                        null,
-//                        null
-//                )
-//        );
-//
-//        Stmt stmts = new Stmt.Seq(
-//                                    new Stmt.ExprStmt(
-//                                            new Expr.Literal(10)
-//                                    ),
-//                                    new Stmt.ExprStmt(
-//                                            new Expr.Literal(20)
-//                                    )
-//        );
-//
-//        Decl decl = new Decl.Const(
-//                                    Arrays.asList(new Stmt.Assign(
-//                                            new Token(Token.TokenType.IDENT, "N", null, null),
-//                                            new Expr.Literal(10))
-//                                    ));
-//        System.out.println(new AstPrinter().printDecl(decl));
-//
-//    }
 
 }

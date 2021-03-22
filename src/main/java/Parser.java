@@ -226,7 +226,8 @@ public class Parser {
             indexToken = consume(Token.TokenType.NUMBER, "Expected a number.");
         }
         if (indexToken != null) {
-            index = (int) indexToken.getLiteral();
+            Double doubleIndex = (Double) indexToken.getLiteral();
+            index = doubleIndex.intValue();
         } else {
             index = -1;
         }
