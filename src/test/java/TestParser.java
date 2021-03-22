@@ -32,6 +32,7 @@ public class TestParser {
 
         System.out.println("-----AstPrinter-----");
         for (Decl declaration : declarations) {
+
             System.out.println(printer.printDecl(declaration));
         }
         System.out.println("--------------------");

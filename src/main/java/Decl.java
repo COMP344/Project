@@ -54,22 +54,6 @@ abstract class Decl implements INode {
             this.procBody = procBody;
         }
 
-        //        final IToken name;
-//        final IToken param;
-//        final Decl.Var variables;
-//        final Stmt.Seq body;
-//        final IToken return_type;
-//        final Expr return_expr;
-//
-//        public Proc(IToken name, IToken param, Decl.Var variables, Stmt.Seq body, IToken return_type, Expr return_expr) {
-//            this.name = name;
-//            this.param = param;
-//            this.variables = variables;
-//            this.body = body;
-//            this.return_type = return_type;
-//            this.return_expr = return_expr;
-//        }
-
         @Override
         public <R> R accept(IVisitor<R> visitor) {
             return visitor.visitProcDecl(this);

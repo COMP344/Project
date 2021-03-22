@@ -112,7 +112,7 @@ abstract class Stmt implements INode {
         final Stmt.Seq statement_sequence;
         final Expr condition;
 
-        public Repeat(Seq statement_sequence, Expr condition) {
+        public Repeat(Stmt.Seq statement_sequence, Expr condition) {
             this.statement_sequence = statement_sequence;
             this.condition = condition;
         }
@@ -141,12 +141,12 @@ abstract class Stmt implements INode {
     }
 
     static class Query extends Stmt {
-        final boolean negate;
+        final boolean bool;
         final IToken ident;
-        final double index;
+        final int index;
 
-        public Query(boolean negate, IToken ident, double index) {
-            this.negate = negate;
+        public Query(boolean bool, IToken ident, int index) {
+            this.bool = bool;
             this.ident = ident;
             this.index = index;
         }
@@ -158,13 +158,13 @@ abstract class Stmt implements INode {
     }
 
     static class Command extends Stmt {
-        final boolean negate;
+        final boolean bool;
         final IToken ident;
-        final double index;
+        final int index;
         final IToken operation;
 
-        public Command(boolean negate, IToken ident, double index, IToken operation) {
-            this.negate = negate;
+        public Command(boolean bool, IToken ident, int index, IToken operation) {
+            this.bool = bool;
             this.ident = ident;
             this.index = index;
             this.operation = operation;
