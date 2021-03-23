@@ -31,10 +31,12 @@ abstract class Decl implements INode {
     }
 
     static class Var extends Decl {
-        final List<Stmt.Var> var_list;
+        final IToken type;
+        final List<IToken> variables;
 
-        public Var(List<Stmt.Var> var_list) {
-            this.var_list = var_list;
+        public Var(IToken type, List<IToken> variables) {
+            this.type = type;
+            this.variables = variables;
         }
 
         @Override
@@ -43,21 +45,13 @@ abstract class Decl implements INode {
         }
     }
 
-    static class Proc extends Decl {
-        final IToken name;
-        final IToken param;
-        final Decl.Var variables;
-        final Stmt.Seq body;
-        final IToken return_type;
-        final Expr return_expr;
+    static class Procedure extends Decl {
+        Proc.Header procHeader;
+        Proc.Body procBody;
 
-        public Proc(IToken name, IToken param, Decl.Var variables, Stmt.Seq body, IToken return_type, Expr return_expr) {
-            this.name = name;
-            this.param = param;
-            this.variables = variables;
-            this.body = body;
-            this.return_type = return_type;
-            this.return_expr = return_expr;
+        public Procedure(Proc.Header procHeader, Proc.Body procBody) {
+            this.procHeader = procHeader;
+            this.procBody = procBody;
         }
 
         @Override

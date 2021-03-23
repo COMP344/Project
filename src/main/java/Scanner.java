@@ -22,8 +22,8 @@ public class Scanner implements IScanner {
         SYMBOLS.put("!", "OP");
         SYMBOLS.put("#", "NEQ");
         SYMBOLS.put("&", "AND");
-        SYMBOLS.put("(", "RPAREN");
-        SYMBOLS.put(")", "LPAREN");
+        SYMBOLS.put("(", "LPAREN");
+        SYMBOLS.put(")", "RPAREN");
         SYMBOLS.put("*", "AST");
         SYMBOLS.put("+", "PLUS");
         SYMBOLS.put(",", "COMMA");

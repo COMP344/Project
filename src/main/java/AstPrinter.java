@@ -38,7 +38,7 @@ public class AstPrinter implements IVisitor<String> {
 
     @Override
     public String visitAssignExpr(Expr.Assign expr) {
-        return expr.name.getLexeme() + " := " + expr.value.accept(this) +";";
+        return expr.name.getLexeme() + " := " + expr.value.accept(this);
     }
 
     @Override
@@ -63,7 +63,7 @@ public class AstPrinter implements IVisitor<String> {
 
     @Override
     public String visitGetExpr(Expr.Get get) {
-        return null;
+        return get.object.accept(this) + "." + get.index.getLexeme();
     }
 
     @Override
@@ -76,21 +76,15 @@ public class AstPrinter implements IVisitor<String> {
         return null;
     }
 
-    @Override
-    public String visitIfStmt(Stmt.IF anIf) {
-        return null;
-    }
-
     //Declaration visit functions
 
     @Override
     public String visitModuleDecl(Decl.Module decl) {
         StringBuilder sb = new StringBuilder();
-        sb.append("MODULE ");
         String modName = decl.modHeader.ident.getLexeme();
+        sb.append("MODULE ");
         sb.append(decl.modHeader.accept(this));
         sb.append(decl.modBody.accept(this));
-        sb.append("\n");
         sb.append("END ").append(modName).append(".");
         return sb.toString();
     }
@@ -109,21 +103,12 @@ public class AstPrinter implements IVisitor<String> {
     @Override
     public String visitVarDecl(Decl.Var decl) {
         StringBuilder sb = new StringBuilder();
-        for (Stmt.Var var_statement : decl.var_list) {
-            sb.append(var_statement.accept(this));
-        }
-        return sb.toString();
-    }
-
-    @Override
-    public String visitVarStmt(Stmt.Var decl) {
-        StringBuilder sb = new StringBuilder();
         sb.append(decl.type.getLexeme()).append(" ");
-        int numOfAssignments = decl.varNames.size();
-        for (IToken var : decl.varNames) {
-            numOfAssignments--;
+        int numOfVar = decl.variables.size();
+        for (IToken var : decl.variables) {
+            numOfVar--;
             sb.append(var.getLexeme());
-            if (numOfAssignments >= 1) {
+            if (numOfVar >= 1) {
                 sb.append(", ");
             }
         }
@@ -132,8 +117,14 @@ public class AstPrinter implements IVisitor<String> {
     }
 
     @Override
-    public String visitProcDecl(Decl.Proc decl) {
-        return null;
+    public String visitProcDecl(Decl.Procedure decl) {
+        StringBuilder sb = new StringBuilder();
+        String procName = decl.procHeader.ident.getLexeme();
+        sb.append("PROCEDURE ");
+        sb.append(decl.procHeader.accept(this));
+        sb.append(decl.procBody.accept(this));
+        sb.append(insertTabs()).append("END ").append(procName).append("\n");
+        return sb.toString();
     }
 
     //Statements visit functions
@@ -141,9 +132,15 @@ public class AstPrinter implements IVisitor<String> {
     @Override
     public String visitSeqStmt(Stmt.Seq stmt) {
         StringBuilder sb = new StringBuilder();
-        sb.append(insertTabs()).append("BEGIN ");
+        int numOfStmts = stmt.stmtList.size();
         for (Stmt stmt1 : stmt.stmtList) {
-            sb.append(stmt1.accept(this)).append(" ");
+            numOfStmts--;
+            sb.append(insertTabs());
+            sb.append(stmt1.accept(this));
+            if (numOfStmts >= 1) {
+                sb.append(";");
+            }
+            sb.append("\n");
         }
         return sb.toString();
     }
@@ -158,6 +155,168 @@ public class AstPrinter implements IVisitor<String> {
         return expr.expr.accept(this);
     }
 
+    @Override
+    public String visitVarStmt(Stmt.Var decl) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(decl.type.getLexeme()).append(" ");
+        int numOfAssignments = decl.varNames.size();
+        for (IToken var : decl.varNames) {
+            numOfAssignments--;
+            sb.append(var.getLexeme());
+            if (numOfAssignments >= 1) {
+                sb.append(", ");
+            }
+        }
+        sb.append("; ");
+        return sb.toString();
+    }
+
+    @Override
+    public String visitHeaderProc(Proc.Header header) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(header.ident.getLexeme());
+        if (header.param != null) {
+            sb.append(header.param.accept(this));
+        }
+        if (header.return_type != null) {
+            sb.append(": ");
+            sb.append(header.return_type.getLexeme());
+        }
+        sb.append(";\n");
+        return sb.toString();
+    }
+
+    @Override
+    public String visitBodyProc(Proc.Body body) {
+        StringBuilder sb = new StringBuilder();
+        if (body.variable_declarations.size() >= 1) {
+            currentTabs++;
+            for (Decl.Var variable_declaration : body.variable_declarations) {
+                sb.append(insertTabs()).append(variable_declaration.accept(this));
+            }
+            currentTabs--;
+        }
+        if (body.stmts != null) {
+            sb.append(insertTabs()).append("BEGIN\n");
+            currentTabs++;
+            sb.append(body.stmts.accept(this));
+            currentTabs--;
+        }
+        if (body.return_expr != null) {
+            currentTabs++;
+            sb.append(insertTabs()).append("RETURN ");
+            sb.append(body.return_expr.accept(this)).append("\n");
+            currentTabs--;
+        }
+        return sb.toString();
+    }
+
+    @Override
+    public String visitParamProc(Proc.Param param) {
+        return "(" + param.type.getLexeme() + " " + param.name.getLexeme() + ")";
+    }
+
+    @Override
+    public String visitCallStmt(Stmt.Call call) {
+        return null;
+    }
+
+    @Override
+    public String visitRepeatStmt(Stmt.Repeat repeat) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("REPEAT\n");
+        currentTabs++;
+        sb.append(repeat.statement_sequence.accept(this));
+        currentTabs--;
+        sb.append(insertTabs()).append("UNTIL");
+        sb.append(repeat.condition.accept(this));
+        return sb.toString();
+    }
+
+    @Override
+    public String visitWhileStmt(Stmt.While aWhile) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("WHILE ");
+        sb.append(aWhile.condition.accept(this));
+        sb.append(" DO ");
+        sb.append(aWhile.statement_sequence.accept(this));
+        sb.append(" END");
+        return sb.toString();
+    }
+
+    @Override
+    public String visitQueryStmt(Stmt.Query query) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("?");
+        if (!query.bool) sb.append("~");
+        sb.append(query.ident.getLexeme());
+        if (query.index != -1) {
+            sb.append(".").append(query.index);
+        }
+        return sb.toString();
+    }
+
+    @Override
+    public String visitCommandStmt(Stmt.Command command) {
+        StringBuilder sb = new StringBuilder();
+        if (command.operation.getTokenType().equals(Token.TokenType.OP)) {
+            sb.append("!");
+            if (!command.bool) sb.append("~");
+            sb.append(command.ident.getLexeme());
+            if (command.index != -1) {
+                sb.append(".").append(command.index);
+            }
+            return sb.toString();
+        } else {
+            sb.append(command.operation.getLexeme());
+            sb.append(" ");
+            sb.append(command.ident.getLexeme());
+        }
+        return sb.toString();
+    }
+
+    @Override
+    public String visitElseIfStmt(Stmt.ElseIf elseIf) {
+        return "ELSIF " +
+                elseIf.condition.accept(this) +
+                " THEN " +
+                elseIf.thenBranch.accept(this);
+    }
+
+    @Override
+    public String visitInlineStmt(Stmt.Inline inline) {
+        StringBuilder sb = new StringBuilder();
+        int numOfStms = inline.stmtList.size();
+        for (Stmt stmt : inline.stmtList) {
+            numOfStms--;
+            sb.append(stmt.accept(this));
+            if (numOfStms >= 1) {
+                sb.append("; ");
+            }
+        }
+        return sb.toString();
+    }
+
+    @Override
+    public String visitIfStmt(Stmt.If anIf) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("IF ");
+        sb.append(anIf.condition.accept(this));
+        sb.append(" THEN ");
+        sb.append(anIf.thenBranch.accept(this));
+        if (anIf.elseIfBranches != null) {
+            for (Stmt elseIf : anIf.elseIfBranches) {
+                sb.append(elseIf.accept(this));
+            }
+        }
+        if (anIf.elseBranch != null) {
+            sb.append("ELSE ");
+            sb.append(anIf.elseBranch.accept(this));
+        }
+        sb.append("END");
+        return sb.toString();
+    }
+
     //Module visit functions
 
     @Override
@@ -169,16 +328,21 @@ public class AstPrinter implements IVisitor<String> {
     public String visitBodyMod(Mod.Body mod) {
         currentTabs++;
         StringBuilder sb = new StringBuilder();
-        if (mod.consts != null) {
-            sb.append(insertTabs()).append(mod.consts.accept(this));
+        if (mod.constants != null) {
+            sb.append(insertTabs()).append(mod.constants.accept(this));
         }
-        if (mod.vars != null) {
-            sb.append(insertTabs()).append(mod.vars.accept(this));
+        if (mod.variable_declarations.size() >= 1) {
+            for (Decl.Var variable_declaration : mod.variable_declarations) {
+                sb.append(insertTabs()).append(variable_declaration.accept(this));
+            }
         }
-        if (mod.proc != null) {
-            sb.append(insertTabs()).append(mod.proc.accept(this));
+        if (mod.procedure_declarations.size() >= 1) {
+            for (Decl.Procedure procedure_declaration : mod.procedure_declarations) {
+                sb.append(insertTabs()).append(procedure_declaration.accept(this));
+            }
         }
         if (mod.seqStmt != null) {
+            sb.append("BEGIN\n");
             sb.append(mod.seqStmt.accept(this));
         }
         currentTabs--;
@@ -201,68 +365,8 @@ public class AstPrinter implements IVisitor<String> {
         return sb.toString();
     }
 
-    private String parenthesizeAssignExpr(String name, Expr expr) {
-        StringBuilder sb = new StringBuilder();
-
-        sb.append("(= ");
-        sb.append(name);
-        sb.append(" ");
-        sb.append(expr.accept(this));
-        sb.append(")");
-
-        return sb.toString();
-    }
-
     private String insertTabs() {
         return "\t".repeat(Math.max(0, currentTabs));
     }
-
-//    public static void main(String[] args) {
-////        Expr expr = new Expr.Binary(
-////                new Token(Token.TokenType.AST, "*", null, null),
-////                new Expr.Unary(
-////                        new Token(Token.TokenType.MINUS, "-", null, null),
-////                        new Expr.Literal(123)),
-////                new Expr.Literal(45.67));
-////
-////        System.out.println(new AstPrinter().print(expr));
-//
-//        Decl decl = new Decl.Module(
-//                new Mod.Header(new Token(Token.TokenType.MODULE, "Assignments", null, null)),
-//                new Mod.Body(
-//                        new Decl.Const(
-//                                  Arrays.asList(new Stmt.Assign(
-//                                            new Token(Token.TokenType.IDENT, "N", null, null),
-//                                            new Expr.Literal(10))
-//                        )
-//                        ),
-//                        new Decl.Var(
-//                                new Token(Token.TokenType.INT, "INT", null, null),
-//                                Arrays.asList(
-//                                        new Token(Token.TokenType.IDENT, "x", null, null)
-//                                )
-//                        ),
-//                        null,
-//                        null
-//                )
-//        );
-//
-//        Stmt stmts = new Stmt.Seq(
-//                                    new Stmt.ExprStmt(
-//                                            new Expr.Literal(10)
-//                                    ),
-//                                    new Stmt.ExprStmt(
-//                                            new Expr.Literal(20)
-//                                    )
-//        );
-//
-////        Decl decl = new Decl.Const(
-////                                    Arrays.asList(new Stmt.Assign(
-////                                            new Token(Token.TokenType.IDENT, "N", null, null),
-////                                            new Expr.Literal(10))
-////                                    ));
-//        System.out.println(new AstPrinter().printDecl(decl));
-//
-//    }
 
 }

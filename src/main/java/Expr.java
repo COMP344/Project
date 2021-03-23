@@ -111,11 +111,11 @@ abstract class Expr implements INode {
     static class Get extends Expr {
 
         final Expr object;
-        final Token name;
+        final Token index;
 
-        public Get(Expr object, Token name) {
+        public Get(Expr object, Token index) {
             this.object = object;
-            this.name = name;
+            this.index = index;
         }
 
         @Override
@@ -127,12 +127,12 @@ abstract class Expr implements INode {
     static class Set extends Expr {
 
         final Expr object;
-        final Token name;
+        final Token index;
         final Expr value;
 
-        public Set(Expr object, Token name, Expr value) {
+        public Set(Expr object, Token index, Expr value) {
             this.object = object;
-            this.name = name;
+            this.index = index;
             this.value = value;
         }
 
@@ -144,12 +144,10 @@ abstract class Expr implements INode {
 
     static class Call extends Expr {
         final Expr callee;
-        final Token paren;
         final List<Expr> arguments;
 
-        public Call(Expr callee, Token paren, List<Expr> arguments) {
+        public Call(Expr callee, List<Expr> arguments) {
             this.callee = callee;
-            this.paren = paren;
             this.arguments = arguments;
         }
 

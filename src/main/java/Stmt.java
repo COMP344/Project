@@ -58,20 +58,135 @@ abstract class Stmt implements INode {
         }
     }
 
-    static class IF extends Stmt {
+    static class If extends Stmt {
         final Expr condition;
         final Stmt thenBranch;
         final Stmt elseBranch;
+        final List<Stmt.ElseIf> elseIfBranches;
 
-        public IF(Expr condition, Stmt thenBranch, Stmt elseBranch) {
+        public If(Expr condition, Stmt thenBranch, Stmt elseBranch, List<Stmt.ElseIf> elseIfBranches) {
             this.condition = condition;
             this.thenBranch = thenBranch;
             this.elseBranch = elseBranch;
+            this.elseIfBranches = elseIfBranches;
         }
 
         @Override
         public <R> R accept(IVisitor<R> visitor) {
             return visitor.visitIfStmt(this);
+        }
+    }
+
+    static class ElseIf extends Stmt {
+        final Expr condition;
+        final Stmt thenBranch;
+
+        public ElseIf(Expr condition, Stmt thenBranch) {
+            this.condition = condition;
+            this.thenBranch = thenBranch;
+        }
+
+        @Override
+        public <R> R accept(IVisitor<R> visitor) {
+            return visitor.visitElseIfStmt(this);
+        }
+    }
+
+    static class Call extends Stmt {
+        final IToken ident;
+        final Expr expression;
+
+        public Call(IToken ident, Expr expression) {
+            this.ident = ident;
+            this.expression = expression;
+        }
+
+
+        @Override
+        public <R> R accept(IVisitor<R> visitor) {
+            return visitor.visitCallStmt(this);
+        }
+    }
+
+    static class Repeat extends Stmt {
+        final Stmt.Seq statement_sequence;
+        final Expr condition;
+
+        public Repeat(Stmt.Seq statement_sequence, Expr condition) {
+            this.statement_sequence = statement_sequence;
+            this.condition = condition;
+        }
+
+        @Override
+        public <R> R accept(IVisitor<R> visitor) {
+            return visitor.visitRepeatStmt(this);
+        }
+    }
+
+    static class While extends Stmt {
+        final Expr condition;
+        final Stmt.Inline statement_sequence;
+        final List<Stmt.ElseIf> elseIfBranches;
+
+        public While(Expr condition, Inline statement_sequence, List<Stmt.ElseIf> elseIfBranches) {
+            this.condition = condition;
+            this.statement_sequence = statement_sequence;
+            this.elseIfBranches = elseIfBranches;
+        }
+
+        @Override
+        public <R> R accept(IVisitor<R> visitor) {
+            return visitor.visitWhileStmt(this);
+        }
+    }
+
+    static class Query extends Stmt {
+        final boolean bool;
+        final IToken ident;
+        final int index;
+
+        public Query(boolean bool, IToken ident, int index) {
+            this.bool = bool;
+            this.ident = ident;
+            this.index = index;
+        }
+
+        @Override
+        public <R> R accept(IVisitor<R> visitor) {
+            return visitor.visitQueryStmt(this);
+        }
+    }
+
+    static class Command extends Stmt {
+        final boolean bool;
+        final IToken ident;
+        final int index;
+        final IToken operation;
+
+        public Command(boolean bool, IToken ident, int index, IToken operation) {
+            this.bool = bool;
+            this.ident = ident;
+            this.index = index;
+            this.operation = operation;
+        }
+
+        @Override
+        public <R> R accept(IVisitor<R> visitor) {
+            return visitor.visitCommandStmt(this);
+        }
+    }
+
+    static class Inline extends Stmt {
+        final List<Stmt> stmtList;
+
+        public Inline(List<Stmt> statements) {
+            this.stmtList = statements;
+        }
+
+
+        @Override
+        public <R> R accept(IVisitor<R> visitor) {
+            return visitor.visitInlineStmt(this);
         }
     }
 }
