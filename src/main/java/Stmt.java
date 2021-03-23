@@ -125,10 +125,10 @@ abstract class Stmt implements INode {
 
     static class While extends Stmt {
         final Expr condition;
-        final Stmt.Seq statement_sequence;
-        final List<Stmt.If> elseIfBranches;
+        final Stmt.Inline statement_sequence;
+        final List<Stmt.ElseIf> elseIfBranches;
 
-        public While(Expr condition, Seq statement_sequence, List<If> elseIfBranches) {
+        public While(Expr condition, Inline statement_sequence, List<Stmt.ElseIf> elseIfBranches) {
             this.condition = condition;
             this.statement_sequence = statement_sequence;
             this.elseIfBranches = elseIfBranches;

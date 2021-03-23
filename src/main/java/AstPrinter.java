@@ -235,7 +235,13 @@ public class AstPrinter implements IVisitor<String> {
 
     @Override
     public String visitWhileStmt(Stmt.While aWhile) {
-        return null;
+        StringBuilder sb = new StringBuilder();
+        sb.append("WHILE ");
+        sb.append(aWhile.condition.accept(this));
+        sb.append(" DO ");
+        sb.append(aWhile.statement_sequence.accept(this));
+        sb.append(" END");
+        return sb.toString();
     }
 
     @Override
@@ -280,8 +286,13 @@ public class AstPrinter implements IVisitor<String> {
     @Override
     public String visitInlineStmt(Stmt.Inline inline) {
         StringBuilder sb = new StringBuilder();
+        int numOfStms = inline.stmtList.size();
         for (Stmt stmt : inline.stmtList) {
-            sb.append(stmt.accept(this)).append(" ");
+            numOfStms--;
+            sb.append(stmt.accept(this));
+            if (numOfStms >= 1) {
+                sb.append("; ");
+            }
         }
         return sb.toString();
     }

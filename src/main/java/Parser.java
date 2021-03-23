@@ -260,7 +260,7 @@ public class Parser {
 
     private Stmt queryStatement() {
         consume(Token.TokenType.QUERY, "Expected '?' keyword.");
-        boolean negate = match(Token.TokenType.NOT);
+        boolean bool = match(Token.TokenType.NOT);
         IToken ident = ident();
         IToken indexToken = null;
         if (match(Token.TokenType.PERIOD)) {
@@ -268,11 +268,12 @@ public class Parser {
         }
         int index;
         if (indexToken != null) {
-            index = (int) indexToken.getLiteral();
+            Double doubleIndex = (Double) indexToken.getLiteral();
+            index = doubleIndex.intValue();
         } else {
             index = -1;
         }
-        return new Stmt.Query(negate, ident, index);
+        return new Stmt.Query(bool, ident, index);
     }
 
     private Stmt ifStatement() {
@@ -309,10 +310,10 @@ public class Parser {
         consume(Token.TokenType.WHILE, "Expected 'WHILE' keyword.");
         Expr condition = expression();
         consume(Token.TokenType.DO, "Expected 'DO' keyword.");
-        Stmt.Seq statement_sequence = statementSequence();
-        List<Stmt.If> elseIfBranches = new ArrayList<>();
+        Stmt.Inline statement_sequence = inlineStatementSequence();
+        List<Stmt.ElseIf> elseIfBranches = new ArrayList<>();
         while (match(Token.TokenType.ELSIF)) {
-            elseIfBranches.add((Stmt.If) ifStatement());
+            elseIfBranches.add(elseIfStatement());
         }
         consume(Token.TokenType.END, "Expected 'END' keyword.");
         return new Stmt.While(condition, statement_sequence, elseIfBranches);
