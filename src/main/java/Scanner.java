@@ -99,7 +99,7 @@ public class Scanner implements IScanner {
         char firstHex = advance();
         char secondHex = advance();
         if (isHexadecimal(firstHex) && isHexadecimal(secondHex)) {
-            int value = Character.digit(firstHex, 16) * 16 + Character.digit(secondHex, 16);
+            double value = Character.digit(firstHex, 16) * 16 + Character.digit(secondHex, 16);
             addToken("NUMBER", value);
         }
     }

@@ -36,5 +36,9 @@ public class TestParser {
             System.out.println(printer.printDecl(declaration));
         }
         System.out.println("--------------------");
+
+        Interpreter interpreter = new Interpreter();
+        interpreter.interpret(declarations);
+        interpreter.print();
     }
 }

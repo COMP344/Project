@@ -1,6 +1,6 @@
 import java.util.List;
 
-abstract class Expr implements INode {
+abstract class Expr implements IExpressionNode {
 
     static class Unary extends Expr {
 
@@ -12,7 +12,7 @@ abstract class Expr implements INode {
         }
 
         @Override
-        public <R> R accept(IVisitor<R> visitor) {
+        public <R> R accept(IExpressionVisitor<R> visitor) {
             return visitor.visitUnaryExpr(this);
         }
     }
@@ -29,7 +29,7 @@ abstract class Expr implements INode {
         }
 
         @Override
-        public <R> R accept(IVisitor<R> visitor) {
+        public <R> R accept(IExpressionVisitor<R> visitor) {
             return visitor.visitBinaryExpr(this);
         }
     }
@@ -44,7 +44,7 @@ abstract class Expr implements INode {
         }
 
         @Override
-        public <R> R accept(IVisitor<R> visitor) {
+        public <R> R accept(IExpressionVisitor<R> visitor) {
             return visitor.visitAssignExpr(this);
         }
     }
@@ -61,7 +61,7 @@ abstract class Expr implements INode {
         }
 
         @Override
-        public <R> R accept(IVisitor<R> visitor) {
+        public <R> R accept(IExpressionVisitor<R> visitor) {
             return visitor.visitLogicalExpr(this);
         }
     }
@@ -75,7 +75,7 @@ abstract class Expr implements INode {
         }
 
         @Override
-        public <R> R accept(IVisitor<R> visitor) {
+        public <R> R accept(IExpressionVisitor<R> visitor) {
             return visitor.visitLiteral(this);
         }
     }
@@ -89,7 +89,7 @@ abstract class Expr implements INode {
         }
 
         @Override
-        public <R> R accept(IVisitor<R> visitor) {
+        public <R> R accept(IExpressionVisitor<R> visitor) {
             return visitor.visitVariableExpr(this);
         }
     }
@@ -103,7 +103,7 @@ abstract class Expr implements INode {
         }
 
         @Override
-        public <R> R accept(IVisitor<R> visitor) {
+        public <R> R accept(IExpressionVisitor<R> visitor) {
             return visitor.visitGroupingExpr(this);
         }
     }
@@ -119,7 +119,7 @@ abstract class Expr implements INode {
         }
 
         @Override
-        public <R> R accept(IVisitor<R> visitor) {
+        public <R> R accept(IExpressionVisitor<R> visitor) {
             return visitor.visitGetExpr(this);
         }
     }
@@ -137,7 +137,7 @@ abstract class Expr implements INode {
         }
 
         @Override
-        public <R> R accept(IVisitor<R> visitor) {
+        public <R> R accept(IExpressionVisitor<R> visitor) {
             return visitor.visitSetExpr(this);
         }
     }
@@ -152,7 +152,7 @@ abstract class Expr implements INode {
         }
 
         @Override
-        public <R> R accept(IVisitor<R> visitor) {
+        public <R> R accept(IExpressionVisitor<R> visitor) {
             return visitor.visitCallExpr(this);
         }
     }
