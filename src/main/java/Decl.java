@@ -1,4 +1,5 @@
 import java.util.List;
+import java.util.Map;
 
 abstract class Decl implements INode {
 
@@ -18,9 +19,9 @@ abstract class Decl implements INode {
     }
 
     static class Const extends Decl {
-        List<Stmt.Assign> assignList;
+        Map<IToken, Expr> assignList;
 
-        public Const(List<Stmt.Assign> assignList) {
+        public Const(Map<IToken, Expr> assignList) {
             this.assignList = assignList;
         }
 

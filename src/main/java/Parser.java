@@ -1,5 +1,7 @@
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Parser {
 
@@ -82,7 +84,7 @@ public class Parser {
     }
 
     private Decl.Const constantDeclaration() {
-        List<Stmt.Assign> assignList = new ArrayList<>();
+        Map<IToken, Expr> assignList = new HashMap<>();
         IToken ident;
         Expr value;
 
@@ -90,7 +92,7 @@ public class Parser {
             ident = ident();
             consume(Token.TokenType.EQL, "Expect '='.");
             value = expression();
-            assignList.add(new Stmt.Assign((Token) ident, value));
+            assignList.put(ident, value);
             consume(Token.TokenType.SEMICOLON, "Expect ';' after a constant declared");
         }
 
@@ -260,7 +262,7 @@ public class Parser {
 
     private Stmt queryStatement() {
         consume(Token.TokenType.QUERY, "Expected '?' keyword.");
-        boolean bool = match(Token.TokenType.NOT);
+        boolean bool = !match(Token.TokenType.NOT);
         IToken ident = ident();
         IToken indexToken = null;
         if (match(Token.TokenType.PERIOD)) {
