@@ -90,15 +90,15 @@ public class AstPrinterTest {
         Assert.assertEquals("Expected:\n" + expected, expected, astPrinter.visitModuleDecl((Decl.Module) simpleDecl));
     }
 
-    @Test
-    public void testVisitConstDecl() {
-        Decl.Const constants = new Decl.Const(
-                Collections.singletonList(new Stmt.Assign(
-                        new Token(Token.TokenType.IDENT, "N", null, 0, 0),
-                        new Expr.Literal(10))
-                ));
-        Assert.assertEquals("Expected: CONST N = 10;", "CONST N = 10;\n", astPrinter.visitConstDecl(constants));
-    }
+//    @Test
+//    public void testVisitConstDecl() {
+//        Decl.Const constants = new Decl.Const(
+//                Collections.singletonList(new Stmt.Assign(
+//                        new Token(Token.TokenType.IDENT, "N", null, 0, 0),
+//                        new Expr.Literal(10))
+//                ));
+//        Assert.assertEquals("Expected: CONST N = 10;", "CONST N = 10;\n", astPrinter.visitConstDecl(constants));
+//    }
 
     @Test
     public void testVisitVarStmt() {

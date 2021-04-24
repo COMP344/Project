@@ -1,6 +1,6 @@
+import java.util.Map;
 
-
-public class AstPrinter implements IVisitor<String> {
+public class AstPrinter implements IVisitor<String>, IExpressionVisitor<String> {
 
     int currentTabs;
 
@@ -93,8 +93,8 @@ public class AstPrinter implements IVisitor<String> {
     public String visitConstDecl(Decl.Const decl) {
         StringBuilder sb = new StringBuilder();
         sb.append("CONST ");
-        for (Stmt.Assign assignment : decl.assignList) {
-            sb.append(assignment.ident.getLexeme()).append(" = ").append(assignment.value.accept(this));
+        for (Map.Entry<IToken, Expr> entry : decl.assignList.entrySet()) {
+            sb.append(entry.getKey().getLexeme()).append(" = ").append(entry.getValue().accept(this));
         }
         sb.append(";\n");
         return sb.toString();
